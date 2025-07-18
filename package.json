@@ -1,0 +1,32 @@
+{
+  "name": "interior-image-embedding",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Interior image analysis and vector embedding system",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test-analysis.js",
+    "process": "node scripts/processImages.js",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@huggingface/inference": "^2.6.4",
+    "@qdrant/js-client-rest": "^1.7.0",
+    "csv-parser": "^3.0.0",
+    "dotenv": "^16.3.1",
+    "openai": "^4.20.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "interior-design",
+    "image-analysis",
+    "vector-database",
+    "qdrant",
+    "ai",
+    "embeddings"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
