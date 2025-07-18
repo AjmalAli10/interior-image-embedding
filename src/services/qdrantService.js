@@ -156,6 +156,71 @@ class QdrantService {
 
     return { must };
   }
+
+  /**
+   * Get a specific point by ID
+   */
+  async getPointById(pointId) {
+    try {
+      const response = await this.client.retrieve(this.collectionName, {
+        ids: [pointId],
+        with_payload: true,
+        with_vector: false,
+      });
+
+      return response.length > 0 ? response[0] : null;
+    } catch (error) {
+      console.error("Error retrieving point by ID:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Get search suggestions for autocomplete
+   */
+  async getSearchSuggestions() {
+    try {
+      // Get a sample of points to extract unique values
+      const response = await this.client.scroll(this.collectionName, {
+        limit: 100,
+        with_payload: true,
+        with_vector: false,
+      });
+
+      const suggestions = {
+        room_types: new Set(),
+        design_themes: new Set(),
+        budget_categories: new Set(),
+        space_types: new Set(),
+      };
+
+      response.points.forEach((point) => {
+        if (point.payload.room_type)
+          suggestions.room_types.add(point.payload.room_type);
+        if (point.payload.design_theme)
+          suggestions.design_themes.add(point.payload.design_theme);
+        if (point.payload.budget_category)
+          suggestions.budget_categories.add(point.payload.budget_category);
+        if (point.payload.space_type)
+          suggestions.space_types.add(point.payload.space_type);
+      });
+
+      return {
+        room_types: Array.from(suggestions.room_types),
+        design_themes: Array.from(suggestions.design_themes),
+        budget_categories: Array.from(suggestions.budget_categories),
+        space_types: Array.from(suggestions.space_types),
+      };
+    } catch (error) {
+      console.error("Error getting search suggestions:", error);
+      return {
+        room_types: [],
+        design_themes: [],
+        budget_categories: [],
+        space_types: [],
+      };
+    }
+  }
 }
 
 export default new QdrantService();
