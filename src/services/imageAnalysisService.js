@@ -114,7 +114,17 @@ Please ensure the response is valid JSON format.`;
       }
     } catch (error) {
       console.error("Error analyzing image:", error);
-      throw new Error("Failed to analyze image");
+      
+      // Provide more specific error information
+      let errorMessage = "Failed to analyze image";
+      if (error.message) {
+        errorMessage += `: ${error.message}`;
+      }
+      if (error.status) {
+        errorMessage += ` (HTTP ${error.status})`;
+      }
+      
+      throw new Error(errorMessage);
     }
   }
 }

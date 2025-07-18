@@ -28,7 +28,7 @@ class ImageService {
   /**
    * Search images using vector similarity in QdrantDB
    */
-  async searchImages(query, limit = 10) {
+  async searchImages(query, limit = 5) {
     try {
       if (!query || query.trim().length === 0) {
         throw new Error("Search query is required");
