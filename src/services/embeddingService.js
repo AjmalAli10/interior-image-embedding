@@ -125,6 +125,8 @@ class EmbeddingService {
       throw new Error("Failed to tokenize text");
     }
   }
+
+
 }
 
 export default new EmbeddingService();
