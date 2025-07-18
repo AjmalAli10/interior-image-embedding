@@ -1,11 +1,11 @@
-import { InferenceClient } from "@huggingface/inference";
+import { HfInference } from "@huggingface/inference";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 class ImageAnalysisService {
   constructor() {
-    this.client = new InferenceClient(process.env.HF_TOKEN);
+    this.client = new HfInference(process.env.HF_TOKEN);
   }
 
   async analyzeImage(imageUrl, imageId) {
@@ -95,9 +95,14 @@ Please ensure the response is valid JSON format.`;
 
       // Try to parse the response as JSON
       try {
-        const jsonResponse = JSON.parse(
-          chatCompletion.choices[0].message.content
-        );
+        let content = chatCompletion.choices[0].message.content;
+
+        // Remove markdown code blocks if present
+        if (content.includes("```json")) {
+          content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+        }
+
+        const jsonResponse = JSON.parse(content);
         return jsonResponse;
       } catch (parseError) {
         // If JSON parsing fails, return the raw response
