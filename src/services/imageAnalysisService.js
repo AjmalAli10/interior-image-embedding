@@ -1,5 +1,6 @@
 import { HfInference } from "@huggingface/inference";
 import dotenv from "dotenv";
+import cdnService from "./cdnService.js";
 
 dotenv.config();
 
@@ -10,6 +11,17 @@ class ImageAnalysisService {
 
   async analyzeImage(imageUrl, imageId) {
     try {
+      // Check CDN cache first
+      const cachedAnalysis = await cdnService.getCachedAnalysis(imageUrl);
+      if (cachedAnalysis) {
+        console.log(`📦 Using cached analysis for image: ${imageId}`);
+        return cachedAnalysis;
+      }
+
+      // Get optimized CDN URL for the image
+      const cdnUrl = await cdnService.getCDNUrl(imageUrl);
+      console.log(`🔄 Using CDN optimized URL: ${cdnUrl}`);
+
       const prompt = `Analyze this interior image with strong focus on Indian interior design context and provide detailed analysis in JSON format:
 
 {
@@ -83,7 +95,7 @@ Please ensure the response is valid JSON format.`;
               {
                 type: "image_url",
                 image_url: {
-                  url: imageUrl,
+                  url: cdnUrl, // Use CDN optimized URL
                 },
               },
             ],
@@ -103,6 +115,10 @@ Please ensure the response is valid JSON format.`;
         }
 
         const jsonResponse = JSON.parse(content);
+        
+        // Cache the analysis result
+        await cdnService.cacheAnalysis(imageUrl, jsonResponse);
+        
         return jsonResponse;
       } catch (parseError) {
         // If JSON parsing fails, return the raw response
