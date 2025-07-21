@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import qdrantService from "./qdrantService.js";
+import queryIntelligenceService from "./queryIntelligenceService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,29 +65,30 @@ class ImageService {
       const HIGH_RELEVANCE_THRESHOLD = 0.85; // 85% similarity minimum
       const MIN_RELEVANCE_THRESHOLD = 0.75;   // 75% absolute minimum
 
-      // Detect query intent (room type)
-      const queryLower = query.toLowerCase();
-      const detectedRoomType = this.detectRoomType(queryLower);
+      // Detect query intent (room type) using intelligent service
+      const detectedRoomType = await queryIntelligenceService.detectRoomType(query);
       
-      // Filter and prioritize results
+      console.log(`🔍 Query: "${query}" -> Detected room type: ${detectedRoomType || 'none'}`);
+      
+      // Filter and prioritize results with strict room type matching
       let filteredResults = searchResults.filter(result => {
         // Apply minimum relevance threshold
         if (result.score < MIN_RELEVANCE_THRESHOLD) {
           return false;
         }
         
-        // If we detected a specific room type, prioritize exact matches
+        // If we detected a specific room type, ONLY return exact matches
         if (detectedRoomType && result.payload.room_type) {
           const resultRoomType = result.payload.room_type.toLowerCase();
-          // Exact room type match with lower threshold
+          // Only return exact room type matches
           if (resultRoomType === detectedRoomType) {
             return result.score >= 0.70; // Allow lower threshold for exact room matches
           }
-          // Non-matching room types need higher threshold
-          return result.score >= HIGH_RELEVANCE_THRESHOLD;
+          // Exclude non-matching room types completely
+          return false;
         }
         
-        // General relevance for non-room-specific queries
+        // For general queries without specific room type, use standard threshold
         return result.score >= MIN_RELEVANCE_THRESHOLD;
       });
 
@@ -107,6 +109,16 @@ class ImageService {
       filteredResults = filteredResults.slice(0, parseInt(limit));
 
       console.log(`Filtered to ${filteredResults.length} highly relevant results`);
+      
+      // Log the filtered results for debugging
+      if (filteredResults.length > 0) {
+        console.log("✅ Matching results:");
+        filteredResults.forEach((result, index) => {
+          console.log(`  ${index + 1}. ${result.payload.room_type} (${result.payload.design_theme}) - Score: ${result.score.toFixed(3)}`);
+        });
+      } else {
+        console.log("❌ No exact matches found for the specified room type");
+      }
 
       // Transform results to match API contract
       const formattedResults = filteredResults.map((result) => ({
@@ -151,27 +163,10 @@ class ImageService {
   }
 
   /**
-   * Detect room type from query
+   * Get query intelligence insights
    */
-  detectRoomType(queryLower) {
-    const roomTypeMap = {
-      'bedroom': ['bedroom', 'bed room', 'sleeping'],
-      'kitchen': ['kitchen', 'cooking', 'culinary'],
-      'living room': ['living room', 'living', 'lounge', 'family room'],
-      'bathroom': ['bathroom', 'bath', 'toilet', 'washroom'],
-      'dining room': ['dining room', 'dining', 'eating'],
-      'home office': ['office', 'study', 'workspace', 'work'],
-      'entrance': ['entrance', 'entry', 'foyer', 'hall'],
-      'staircase': ['staircase', 'stairs', 'steps']
-    };
-
-    for (const [roomType, keywords] of Object.entries(roomTypeMap)) {
-      if (keywords.some(keyword => queryLower.includes(keyword))) {
-        return roomType;
-      }
-    }
-    
-    return null; // No specific room type detected
+  async getQueryInsights() {
+    return queryIntelligenceService.getQueryInsights();
   }
 
   // Private helper methods

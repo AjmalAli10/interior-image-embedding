@@ -9,12 +9,18 @@ A comprehensive system for analyzing interior design images using AI and storing
 - 🔍 **Vector Search**: Stores embeddings in Qdrant for semantic similarity search
 - 📊 **Batch Processing**: Processes multiple images efficiently with rate limiting
 - 🏗️ **Modular Architecture**: Clean separation of concerns with dedicated services
+- 🚀 **CDN Layer**: Caches processed images and analysis results to reduce model inference load
 
 ## Architecture
 
 ```
-CSV Images → AI Analysis → Data Transformation → Qdrant Vector DB
+CSV Images → CDN Layer → AI Analysis → Data Transformation → Qdrant Vector DB
 ```
+
+The CDN layer provides:
+- **Image Optimization**: Transforms original images for faster processing
+- **Analysis Caching**: Stores results to avoid re-processing
+- **Cache Management**: Tools to monitor and manage cache performance
 
 ## Setup
 
@@ -38,6 +44,9 @@ OPENAI_API_KEY=your_openai_api_key
 # Qdrant Configuration
 QDRANT_URL=http://localhost:6333
 QDRANT_API_KEY=your_qdrant_api_key
+
+# CDN Configuration (optional)
+CDN_BASE_URL=https://cdn.example.com
 ```
 
 ### 3. Qdrant Setup
@@ -149,9 +158,20 @@ const results = await qdrantService.searchSimilar(vector, 10, {
 
 ## API Endpoints
 
+### Image Search
+- `GET /api/images` - Get all images from CSV
+- `GET /api/images/search?query=<text>&limit=<number>` - Search images using vector similarity
+
+### CDN Management
+- `GET /api/cdn/stats` - Get cache statistics
+- `DELETE /api/cdn/expired` - Clear expired cache entries
+- `DELETE /api/cdn/all` - Clear all cache
+- `GET /api/cdn/check/:imageId?imageUrl=<url>` - Check CDN status for specific image
+
 The system includes services for:
 
 - **Image Analysis**: `src/services/imageAnalysisService.js`
+- **CDN Layer**: `src/services/cdnService.js`
 - **Embedding Generation**: `src/services/embeddingService.js`
 - **Vector Database**: `src/services/qdrantService.js`
 - **Data Transformation**: `src/utils/dataTransformer.js`
@@ -161,6 +181,8 @@ The system includes services for:
 - **Processing Speed**: ~5 images per minute (with rate limiting)
 - **Search Response**: < 200ms for similarity search
 - **Accuracy**: High precision for Indian interior design context
+- **Cache Performance**: 24-hour TTL with automatic cleanup
+- **CDN Optimization**: Reduced model inference load through caching
 
 ## Error Handling
 
@@ -176,6 +198,25 @@ Processing results are saved to:
 - `./output/processing_results_[timestamp].json`
 - Qdrant vector database
 - Console logs with progress and summary
+- CDN cache for future use
+
+## Testing
+
+### Test CDN Functionality
+
+```bash
+node scripts/testCDN.js
+```
+
+### Monitor Cache Performance
+
+```bash
+# Get cache statistics
+curl http://localhost:3000/api/cdn/stats
+
+# Check specific image
+curl "http://localhost:3000/api/cdn/check/123?imageUrl=https://example.com/image.jpg"
+```
 
 ## Contributing
 

@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import imageAnalysisService from "../src/services/imageAnalysisService.js";
 import dataTransformer from "../src/utils/dataTransformer.js";
 import qdrantService from "../src/services/qdrantService.js";
+import cdnService from "../src/services/cdnService.js";
 
 dotenv.config();
 
@@ -139,6 +140,10 @@ class ImageProcessor {
     console.log("=".repeat(50));
     console.log(`✅ Successfully processed: ${this.results.length} images`);
     console.log(`❌ Errors: ${this.errors.length} images`);
+
+    // Get CDN cache statistics
+    const cdnStats = cdnService.getCacheStats();
+    console.log(`📦 CDN Cache: ${cdnStats.analysis_cache_count} analysis results cached`);
 
     if (this.errors.length > 0) {
       console.log("\n❌ Failed images:");

@@ -1,6 +1,7 @@
 import express from "express";
 const router = express.Router();
 import imageController from "../controllers/imageController.js";
+import imageService from "../services/imageService.js";
 
 // GET /api/images - Get all images from CSV
 router.get("/", imageController.getAllImages);
@@ -103,6 +104,24 @@ router.get("/debug-search", async (req, res) => {
       success: false,
       debug_error: error.message,
       stack: error.stack
+    });
+  }
+});
+
+// GET /api/images/query-insights - Get query intelligence insights
+router.get("/query-insights", async (req, res) => {
+  try {
+    const insights = await imageService.getQueryInsights();
+    res.json({
+      success: true,
+      data: insights,
+      message: "Query intelligence insights retrieved successfully"
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: "Failed to get query insights",
+      message: error.message
     });
   }
 });
